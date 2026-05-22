@@ -10,6 +10,7 @@ import Testing
     #expect(preferences.fontName == "SF Pro Display")
     #expect(preferences.fontSize == 32)
     #expect(preferences.isGradientEnabled)
+    #expect(preferences.overlayWidth == 920)
 }
 
 @Test func storesPreferencesInUserDefaults() throws {
@@ -19,6 +20,7 @@ import Testing
     var preferences = LyricsPreferences.default
     preferences.isLocked = true
     preferences.fontSize = 40
+    preferences.overlayWidth = 1200
 
     try store.save(preferences)
     #expect(try store.load() == preferences)

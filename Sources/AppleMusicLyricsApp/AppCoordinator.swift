@@ -253,11 +253,21 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
     }
 
     private func saveOverlayOriginIfNeeded() {
-        guard !preferences.isLocked, let origin = overlayController?.currentWindowOrigin() else {
+        guard !preferences.isLocked,
+              let origin = overlayController?.currentWindowOrigin() else {
             return
         }
+        let width = overlayController?.currentWindowWidth()
+        var changed = false
         if preferences.windowOrigin != origin {
             preferences.windowOrigin = origin
+            changed = true
+        }
+        if let width, abs(preferences.overlayWidth - width) > 1 {
+            preferences.overlayWidth = width
+            changed = true
+        }
+        if changed {
             try? preferencesStore.save(preferences)
         }
     }

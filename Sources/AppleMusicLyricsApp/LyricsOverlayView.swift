@@ -10,13 +10,13 @@ struct LyricsOverlayView: View {
         VStack(spacing: 10) {
             lyricText(currentLine, size: preferences.fontSize, opacity: preferences.opacity)
                 .fontWeight(.bold)
-                .lineLimit(2)
-                .minimumScaleFactor(0.55)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
             Text(nextLine)
                 .font(.custom(preferences.fontName, size: max(preferences.fontSize * 0.52, 14)))
                 .foregroundStyle(.white.opacity(0.72))
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .multilineTextAlignment(.center)
         .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 2)

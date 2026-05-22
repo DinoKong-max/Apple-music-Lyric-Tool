@@ -29,6 +29,14 @@ final class LyricsOverlayController {
         self.preferences = preferences
         window?.ignoresMouseEvents = preferences.isLocked
         window?.alphaValue = preferences.opacity
+        if let window {
+            let width = max(360, min(preferences.overlayWidth, 1800))
+            var frame = window.frame
+            if abs(frame.size.width - width) > 0.5 {
+                frame.size.width = width
+                window.setFrame(frame, display: true)
+            }
+        }
         if let origin = preferences.windowOrigin {
             window?.setFrameOrigin(NSPoint(x: origin.x, y: origin.y))
         }
@@ -38,6 +46,9 @@ final class LyricsOverlayController {
         preferences.isLocked = locked
         window?.ignoresMouseEvents = locked
         window?.isMovableByWindowBackground = !locked
+        window?.styleMask = locked
+            ? [.borderless, .nonactivatingPanel]
+            : [.borderless, .nonactivatingPanel, .resizable]
     }
 
     func currentWindowOrigin() -> CodablePoint? {
@@ -46,17 +57,25 @@ final class LyricsOverlayController {
         return CodablePoint(x: origin.x, y: origin.y)
     }
 
+    func currentWindowWidth() -> Double? {
+        guard let window else { return nil }
+        return window.frame.width
+    }
+
     private func ensureWindow() -> NSPanel {
         if let window {
             return window
         }
 
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let size = NSSize(width: min(920, screenFrame.width - 80), height: 150)
+        let configuredWidth = max(360, min(preferences.overlayWidth, 1800))
+        let size = NSSize(width: min(configuredWidth, screenFrame.width - 80), height: 170)
         let origin = NSPoint(x: screenFrame.midX - size.width / 2, y: screenFrame.minY + 120)
         let panel = NSPanel(
             contentRect: NSRect(origin: origin, size: size),
-            styleMask: [.borderless, .nonactivatingPanel],
+            styleMask: preferences.isLocked
+                ? [.borderless, .nonactivatingPanel]
+                : [.borderless, .nonactivatingPanel, .resizable],
             backing: .buffered,
             defer: false
         )

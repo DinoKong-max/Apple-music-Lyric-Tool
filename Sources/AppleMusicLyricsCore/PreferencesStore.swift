@@ -34,6 +34,7 @@ public struct LyricsPreferences: Codable, Equatable, Sendable {
     public var gradientEndColor: CodableColor
     public var isGradientEnabled: Bool
     public var opacity: Double
+    public var overlayWidth: Double
     public var windowOrigin: CodablePoint?
 
     public static let `default` = LyricsPreferences(
@@ -46,6 +47,7 @@ public struct LyricsPreferences: Codable, Equatable, Sendable {
         gradientEndColor: CodableColor(red: 0.35, green: 0.48, blue: 1.0),
         isGradientEnabled: true,
         opacity: 1,
+        overlayWidth: 920,
         windowOrigin: nil
     )
 }

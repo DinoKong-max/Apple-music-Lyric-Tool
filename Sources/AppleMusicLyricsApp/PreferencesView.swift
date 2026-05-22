@@ -25,6 +25,9 @@ struct PreferencesView: View {
             Slider(value: binding(\.opacity), in: 0.35...1, step: 0.05) {
                 Text("透明度")
             }
+            Slider(value: binding(\.overlayWidth), in: 360...1800, step: 10) {
+                Text("歌词框宽度")
+            }
 
             Toggle("启用渐变", isOn: binding(\.isGradientEnabled))
 
