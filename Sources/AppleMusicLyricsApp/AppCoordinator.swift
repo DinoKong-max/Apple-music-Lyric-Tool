@@ -98,17 +98,63 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
                     updateOverlay(for: latestSnapshot)
                 }
             } else {
+                if let localLyrics = detector.currentTrackLyrics() {
+                    activeLyrics = LyricsResult(
+                        source: .appleMusic,
+                        syncedLines: [],
+                        plainText: localLyrics,
+                        confidence: 0.7
+                    )
+                    synchronizer = nil
+                    activeTrackKey = key
+                    statusMenuController?.setStatus("使用 Apple Music 内置歌词：\(snapshot.title)")
+                } else {
+                    activeLyrics = nil
+                    synchronizer = nil
+                    activeTrackKey = nil
+                    statusMenuController?.setStatus("未匹配到歌词：\(snapshot.title)")
+                }
+                if let latestSnapshot, latestSnapshot.title == snapshot.title, latestSnapshot.artist == snapshot.artist {
+                    updateOverlay(for: latestSnapshot)
+                }
+            }
+        } catch {
+            if let localLyrics = detector.currentTrackLyrics() {
+                activeLyrics = LyricsResult(
+                    source: .appleMusic,
+                    syncedLines: [],
+                    plainText: localLyrics,
+                    confidence: 0.7
+                )
+                synchronizer = nil
+                activeTrackKey = key
+                statusMenuController?.setStatus("网络失败，使用 Apple Music 内置歌词")
+            } else {
                 activeLyrics = nil
                 synchronizer = nil
                 activeTrackKey = nil
-                statusMenuController?.setStatus("未匹配到歌词：\(snapshot.title)")
+                statusMenuController?.setStatus("歌词请求失败，稍后重试")
             }
-        } catch {
-            activeLyrics = nil
-            synchronizer = nil
-            activeTrackKey = nil
-            statusMenuController?.setStatus("歌词请求失败，稍后重试")
+            if let latestSnapshot, latestSnapshot.title == snapshot.title, latestSnapshot.artist == snapshot.artist {
+                updateOverlay(for: latestSnapshot)
+            }
         }
+    }
+
+    private func firstDisplayLine(from plainText: String) -> String {
+        plainText
+            .split(separator: "\n")
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first(where: { !$0.isEmpty }) ?? ""
+    }
+
+    private func secondDisplayLine(from plainText: String) -> String {
+        plainText
+            .split(separator: "\n")
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .dropFirst()
+            .first ?? "未找到同步歌词"
     }
 
     private func updateOverlay(for snapshot: TrackSnapshot) {
@@ -128,8 +174,12 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         }
 
         if let plainText = activeLyrics?.plainText {
-            let firstLine = plainText.split(separator: "\n").first.map(String.init) ?? snapshot.title
-            overlayController?.show(current: firstLine, next: "未找到同步歌词")
+            let firstLine = firstDisplayLine(from: plainText)
+            let secondLine = secondDisplayLine(from: plainText)
+            overlayController?.show(
+                current: firstLine.isEmpty ? snapshot.title : firstLine,
+                next: secondLine
+            )
             saveOverlayOriginIfNeeded()
             return
         }

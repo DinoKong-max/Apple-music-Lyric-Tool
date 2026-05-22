@@ -42,6 +42,7 @@ public enum LyricsSource: String, Codable, Sendable {
     case lrclib
     case localCache
     case importedLRC
+    case appleMusic
 }
 
 public struct LyricsResult: Equatable, Codable, Sendable {

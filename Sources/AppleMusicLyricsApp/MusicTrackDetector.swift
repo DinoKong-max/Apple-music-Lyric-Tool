@@ -52,4 +52,34 @@ final class MusicTrackDetector {
 
         return try parser.parse(output)
     }
+
+    func currentTrackLyrics() -> String? {
+        let source = """
+        tell application "System Events"
+            set musicIsRunning to exists process "Music"
+        end tell
+        if musicIsRunning is false then
+            return ""
+        end if
+        tell application "Music"
+            try
+                return lyrics of current track
+            on error
+                return ""
+            end try
+        end tell
+        """
+
+        var error: NSDictionary?
+        guard let script = NSAppleScript(source: source) else {
+            return nil
+        }
+        let descriptor = script.executeAndReturnError(&error)
+        if error != nil {
+            return nil
+        }
+
+        let text = descriptor.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return text.isEmpty ? nil : text
+    }
 }
