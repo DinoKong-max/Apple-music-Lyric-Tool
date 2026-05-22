@@ -12,20 +12,23 @@ struct LyricsOverlayView: View {
         VStack(spacing: 10) {
             lyricText(currentLine, size: preferences.fontSize, opacity: preferences.opacity)
                 .fontWeight(.bold)
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
             Text(nextLine)
                 .font(.custom(preferences.fontName, size: max(preferences.fontSize * 0.52, 14)))
                 .foregroundStyle(.white.opacity(0.72))
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
         }
         .multilineTextAlignment(.center)
         .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 2)
-        .padding(.horizontal, 28)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .background(hoverOutline)
+        .background(selectionOutline)
+        .overlay(alignment: .bottomTrailing) {
+            resizeHint
+        }
         .overlay(HoverTrackingView(isHovered: $isHovered))
     }
 
@@ -54,16 +57,27 @@ struct LyricsOverlayView: View {
     }
 
     @ViewBuilder
-    private var hoverOutline: some View {
-        if !preferences.isLocked && isHovered {
+    private var selectionOutline: some View {
+        if !preferences.isLocked {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.06))
+                .fill(Color.white.opacity(isHovered ? 0.08 : 0.03))
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                        .stroke(Color.white.opacity(isHovered ? 0.65 : 0.28), lineWidth: isHovered ? 1.4 : 1)
                 )
         } else {
             Color.clear
+        }
+    }
+
+    @ViewBuilder
+    private var resizeHint: some View {
+        if !preferences.isLocked {
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(isHovered ? 0.85 : 0.55))
+                .padding(.trailing, 8)
+                .padding(.bottom, 7)
         }
     }
 }

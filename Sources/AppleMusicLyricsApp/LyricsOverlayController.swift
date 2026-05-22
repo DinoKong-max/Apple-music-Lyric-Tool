@@ -69,7 +69,7 @@ final class LyricsOverlayController {
 
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         let configuredWidth = max(360, min(preferences.overlayWidth, 1800))
-        let size = NSSize(width: min(configuredWidth, screenFrame.width - 80), height: 170)
+        let size = NSSize(width: min(configuredWidth, screenFrame.width - 80), height: 118)
         let origin = NSPoint(x: screenFrame.midX - size.width / 2, y: screenFrame.minY + 120)
         let panel = NSPanel(
             contentRect: NSRect(origin: origin, size: size),
