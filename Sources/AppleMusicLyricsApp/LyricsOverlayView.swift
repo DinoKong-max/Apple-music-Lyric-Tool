@@ -3,22 +3,41 @@ import AppKit
 import AppleMusicLyricsCore
 
 struct LyricsOverlayView: View {
-    let currentLine: String
-    let nextLine: String
-    let preferences: LyricsPreferences
+    @ObservedObject var model: LyricsOverlayModel
     @State private var isHovered = false
 
     var body: some View {
         VStack(spacing: 10) {
-            lyricText(currentLine, size: preferences.fontSize, opacity: preferences.opacity)
-                .fontWeight(.bold)
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
-            Text(nextLine)
-                .font(.custom(preferences.fontName, size: max(preferences.fontSize * 0.52, 14)))
-                .foregroundStyle(.white.opacity(0.72))
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
+            ZStack {
+                lyricText(model.currentLine, size: model.preferences.fontSize, opacity: model.preferences.opacity)
+                    .fontWeight(.bold)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+                    .id("current-\(model.currentLine)")
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        )
+                    )
+            }
+            .animation(.easeInOut(duration: 0.33), value: model.currentLine)
+
+            ZStack {
+                Text(model.nextLine)
+                    .font(.custom(model.preferences.fontName, size: max(model.preferences.fontSize * 0.52, 14)))
+                    .foregroundStyle(.white.opacity(0.72))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+                    .id("next-\(model.nextLine)")
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        )
+                    )
+            }
+            .animation(.easeInOut(duration: 0.33), value: model.nextLine)
         }
         .multilineTextAlignment(.center)
         .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 2)
@@ -34,15 +53,15 @@ struct LyricsOverlayView: View {
 
     @ViewBuilder
     private func lyricText(_ text: String, size: Double, opacity: Double) -> some View {
-        let font = Font.custom(preferences.fontName, size: size)
-        if preferences.isGradientEnabled {
+        let font = Font.custom(model.preferences.fontName, size: size)
+        if model.preferences.isGradientEnabled {
             Text(text)
                 .font(font)
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color(preferences.gradientStartColor),
-                            Color(preferences.gradientEndColor)
+                            Color(model.preferences.gradientStartColor),
+                            Color(model.preferences.gradientEndColor)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -52,13 +71,13 @@ struct LyricsOverlayView: View {
         } else {
             Text(text)
                 .font(font)
-                .foregroundStyle(Color(preferences.primaryColor).opacity(opacity))
+                .foregroundStyle(Color(model.preferences.primaryColor).opacity(opacity))
         }
     }
 
     @ViewBuilder
     private var selectionOutline: some View {
-        if !preferences.isLocked {
+        if !model.preferences.isLocked {
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(isHovered ? 0.08 : 0.03))
                 .overlay(
@@ -72,7 +91,7 @@ struct LyricsOverlayView: View {
 
     @ViewBuilder
     private var resizeHint: some View {
-        if !preferences.isLocked {
+        if !model.preferences.isLocked {
             Image(systemName: "arrow.up.left.and.arrow.down.right")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Color.white.opacity(isHovered ? 0.85 : 0.55))

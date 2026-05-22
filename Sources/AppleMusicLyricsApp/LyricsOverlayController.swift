@@ -6,6 +6,8 @@ import AppleMusicLyricsCore
 final class LyricsOverlayController {
     private var window: NSPanel?
     private var preferences: LyricsPreferences
+    private var model: LyricsOverlayModel?
+    private var hostingView: NSHostingView<LyricsOverlayView>?
 
     init(preferences: LyricsPreferences) {
         self.preferences = preferences
@@ -13,11 +15,10 @@ final class LyricsOverlayController {
 
     func show(current: String, next: String) {
         let panel = ensureWindow()
-        panel.contentView = NSHostingView(rootView: LyricsOverlayView(
-            currentLine: current,
-            nextLine: next,
-            preferences: preferences
-        ))
+        ensureHostingView(on: panel)
+        model?.currentLine = current
+        model?.nextLine = next
+        model?.preferences = preferences
         panel.orderFrontRegardless()
     }
 
@@ -27,6 +28,7 @@ final class LyricsOverlayController {
 
     func updatePreferences(_ preferences: LyricsPreferences) {
         self.preferences = preferences
+        model?.preferences = preferences
         window?.ignoresMouseEvents = preferences.isLocked
         window?.alphaValue = preferences.opacity
         if let window {
@@ -93,5 +95,24 @@ final class LyricsOverlayController {
 
         self.window = panel
         return panel
+    }
+
+    private func ensureHostingView(on panel: NSPanel) {
+        if hostingView != nil {
+            return
+        }
+
+        let initialModel = LyricsOverlayModel(
+            currentLine: "等待 Apple Music 播放",
+            nextLine: "",
+            preferences: preferences
+        )
+        model = initialModel
+        let view = LyricsOverlayView(model: initialModel)
+        let host = NSHostingView(rootView: view)
+        host.frame = panel.contentView?.bounds ?? .zero
+        host.autoresizingMask = [.width, .height]
+        panel.contentView = host
+        hostingView = host
     }
 }
