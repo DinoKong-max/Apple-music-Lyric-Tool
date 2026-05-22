@@ -5,6 +5,7 @@ struct LyricsOverlayView: View {
     let currentLine: String
     let nextLine: String
     let preferences: LyricsPreferences
+    @State private var isHovered = false
 
     var body: some View {
         VStack(spacing: 10) {
@@ -22,7 +23,12 @@ struct LyricsOverlayView: View {
         .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 2)
         .padding(.horizontal, 28)
         .padding(.vertical, 16)
-        .background(Color.clear)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(hoverOutline)
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 
     @ViewBuilder
@@ -46,6 +52,20 @@ struct LyricsOverlayView: View {
             Text(text)
                 .font(font)
                 .foregroundStyle(Color(preferences.primaryColor).opacity(opacity))
+        }
+    }
+
+    @ViewBuilder
+    private var hoverOutline: some View {
+        if !preferences.isLocked && isHovered {
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white.opacity(0.06))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                )
+        } else {
+            Color.clear
         }
     }
 }
