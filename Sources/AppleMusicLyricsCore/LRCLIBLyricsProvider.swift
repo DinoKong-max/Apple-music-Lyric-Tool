@@ -99,8 +99,14 @@ public struct LRCLIBLyricsProvider: LyricsProvider {
     }
 
     public func lyrics(for track: TrackSnapshot) async throws -> LyricsResult? {
+        if let direct = try await fetchDirect(track: track) {
+            return direct
+        }
+
         let results = try await search(track: track)
-        guard let best = LRCLIBRanker.rank(results, for: track).first else {
+        let fallbackResults = results.isEmpty ? (try await searchByQuery(track: track)) : []
+        let candidates = results + fallbackResults
+        guard let best = LRCLIBRanker.rank(candidates, for: track).first else {
             return nil
         }
 
@@ -144,5 +150,59 @@ public struct LRCLIBLyricsProvider: LyricsProvider {
         }
 
         return try JSONDecoder().decode([LRCLIBSearchResult].self, from: data)
+    }
+
+    private func searchByQuery(track: TrackSnapshot) async throws -> [LRCLIBSearchResult] {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("/api/search"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "q", value: "\(track.title) \(track.artist)")
+        ]
+
+        let requestURL = components.url!
+        let (data, response) = try await session.data(from: requestURL)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            return []
+        }
+
+        return try JSONDecoder().decode([LRCLIBSearchResult].self, from: data)
+    }
+
+    private func fetchDirect(track: TrackSnapshot) async throws -> LyricsResult? {
+        guard let duration = track.duration else {
+            return nil
+        }
+
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("/api/get"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "track_name", value: track.title),
+            URLQueryItem(name: "artist_name", value: track.artist),
+            URLQueryItem(name: "album_name", value: track.album ?? ""),
+            URLQueryItem(name: "duration", value: String(Int(duration.rounded())))
+        ]
+
+        let requestURL = components.url!
+        let (data, response) = try await session.data(from: requestURL)
+        guard let http = response as? HTTPURLResponse else {
+            return nil
+        }
+        guard http.statusCode == 200 else {
+            return nil
+        }
+
+        let record = try JSONDecoder().decode(LRCLIBSearchResult.self, from: data)
+        if let synced = record.syncedLyrics, !synced.isEmpty {
+            let lines = try parser.parse(synced)
+            return LyricsResult(source: .lrclib, syncedLines: lines, plainText: record.plainLyrics, confidence: 0.98)
+        }
+        if let plain = record.plainLyrics, !plain.isEmpty {
+            return LyricsResult(source: .lrclib, syncedLines: [], plainText: plain, confidence: 0.8)
+        }
+        return nil
     }
 }

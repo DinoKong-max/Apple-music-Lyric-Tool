@@ -16,6 +16,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
     private var synchronizer: LyricsSynchronizer?
     private var cache: LyricsCache?
     private var activeTrackKey: LyricsCacheKey?
+    private var loadingTrackKey: LyricsCacheKey?
     private var activeLyrics: LyricsResult?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -68,15 +69,22 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
 
     private func ensureLyricsLoaded(for snapshot: TrackSnapshot) async {
         let key = LyricsCacheKey(track: snapshot)
-        guard key != activeTrackKey else {
+        if key == activeTrackKey, activeLyrics != nil {
             return
         }
-
-        activeTrackKey = key
+        if loadingTrackKey == key {
+            return
+        }
+        loadingTrackKey = key
+        defer { loadingTrackKey = nil }
 
         if let cached = (try? cache?.load(for: key)) ?? nil {
             activeLyrics = cached
             synchronizer = LyricsSynchronizer(lines: cached.syncedLines)
+            activeTrackKey = key
+            if let latestSnapshot, latestSnapshot.title == snapshot.title, latestSnapshot.artist == snapshot.artist {
+                updateOverlay(for: latestSnapshot)
+            }
             return
         }
 
@@ -85,13 +93,21 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
                 activeLyrics = result
                 synchronizer = LyricsSynchronizer(lines: result.syncedLines)
                 try? cache?.store(result, for: key)
+                activeTrackKey = key
+                if let latestSnapshot, latestSnapshot.title == snapshot.title, latestSnapshot.artist == snapshot.artist {
+                    updateOverlay(for: latestSnapshot)
+                }
             } else {
                 activeLyrics = nil
                 synchronizer = nil
+                activeTrackKey = nil
+                statusMenuController?.setStatus("未匹配到歌词：\(snapshot.title)")
             }
         } catch {
             activeLyrics = nil
             synchronizer = nil
+            activeTrackKey = nil
+            statusMenuController?.setStatus("歌词请求失败，稍后重试")
         }
     }
 
