@@ -2,8 +2,8 @@
 set -euo pipefail
 
 APP_NAME="Apple Music Lyrics"
-VERSION="0.1.0"
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+VERSION="$(cat "$ROOT_DIR/VERSION")"
 DIST_DIR="$ROOT_DIR/dist"
 APP_DIR="$DIST_DIR/$APP_NAME.app"
 DMG_PATH="$DIST_DIR/AppleMusicLyrics-$VERSION.dmg"

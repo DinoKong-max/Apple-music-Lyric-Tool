@@ -35,7 +35,8 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
                 openPreferences: { [weak self] in self?.openPreferences() },
                 showAbout: { [weak self] in self?.showAbout() },
                 quit: { NSApp.terminate(nil) }
-            )
+            ),
+            version: AppVersion.display
         )
         startPolling()
     }
@@ -248,7 +249,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
     private func showAbout() {
         let alert = NSAlert()
         alert.messageText = "Apple Music Lyrics"
-        alert.informativeText = "轻量桌面悬浮歌词工具"
+        alert.informativeText = "轻量桌面悬浮歌词工具\n版本：\(AppVersion.display)"
         alert.runModal()
     }
 

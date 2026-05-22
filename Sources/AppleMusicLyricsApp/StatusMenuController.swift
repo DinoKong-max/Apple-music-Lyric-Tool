@@ -13,11 +13,13 @@ struct StatusMenuActions {
 final class StatusMenuController: NSObject {
     private let statusItem: NSStatusItem
     private let statusItemText = NSMenuItem(title: "正在启动", action: nil, keyEquivalent: "")
+    private let versionItem: NSMenuItem
     private let actions: StatusMenuActions
 
-    init(actions: StatusMenuActions) {
+    init(actions: StatusMenuActions, version: String) {
         self.actions = actions
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        self.versionItem = NSMenuItem(title: "版本：\(version)", action: nil, keyEquivalent: "")
         super.init()
         configureButton()
         configureMenu()
@@ -35,6 +37,7 @@ final class StatusMenuController: NSObject {
     private func configureMenu() {
         let menu = NSMenu()
         menu.addItem(statusItemText)
+        menu.addItem(versionItem)
         menu.addItem(.separator())
         menu.addItem(item("显示/隐藏歌词", #selector(toggleOverlay)))
         menu.addItem(item("锁定/解锁位置", #selector(toggleLock)))
