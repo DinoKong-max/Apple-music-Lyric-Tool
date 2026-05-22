@@ -79,10 +79,30 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         loadingTrackKey = key
         defer { loadingTrackKey = nil }
 
+        // 先用 Apple Music 内置歌词兜底，尤其是中文曲目可显著提高可用性。
+        if let localLyrics = detector.currentTrackLyrics(),
+           !(activeLyrics?.source == .appleMusic && activeTrackKey == key) {
+            activeLyrics = LyricsResult(
+                source: .appleMusic,
+                syncedLines: [],
+                plainText: localLyrics,
+                confidence: 0.72
+            )
+            synchronizer = nil
+            activeTrackKey = key
+            statusMenuController?.setStatus("优先使用 Apple Music 内置歌词")
+            if let latestSnapshot,
+               latestSnapshot.title == snapshot.title,
+               latestSnapshot.artist == snapshot.artist {
+                updateOverlay(for: latestSnapshot)
+            }
+        }
+
         if let cached = (try? cache?.load(for: key)) ?? nil {
             activeLyrics = cached
             synchronizer = LyricsSynchronizer(lines: cached.syncedLines)
             activeTrackKey = key
+            statusMenuController?.setStatus("已命中缓存歌词：\(snapshot.title)")
             if let latestSnapshot, latestSnapshot.title == snapshot.title, latestSnapshot.artist == snapshot.artist {
                 updateOverlay(for: latestSnapshot)
             }
@@ -95,6 +115,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
                 synchronizer = LyricsSynchronizer(lines: result.syncedLines)
                 try? cache?.store(result, for: key)
                 activeTrackKey = key
+                statusMenuController?.setStatus("已匹配在线歌词：\(snapshot.title)")
                 if let latestSnapshot, latestSnapshot.title == snapshot.title, latestSnapshot.artist == snapshot.artist {
                     updateOverlay(for: latestSnapshot)
                 }

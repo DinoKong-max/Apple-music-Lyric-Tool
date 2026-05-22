@@ -153,21 +153,32 @@ public struct LRCLIBLyricsProvider: LyricsProvider {
     }
 
     private func searchByQuery(track: TrackSnapshot) async throws -> [LRCLIBSearchResult] {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("/api/search"),
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = [
-            URLQueryItem(name: "q", value: "\(track.title) \(track.artist)")
-        ]
+        let candidates = makeQueryCandidates(track: track)
+        var merged: [LRCLIBSearchResult] = []
+        var seen = Set<Int>()
 
-        let requestURL = components.url!
-        let (data, response) = try await session.data(from: requestURL)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            return []
+        for candidate in candidates {
+            var components = URLComponents(
+                url: baseURL.appendingPathComponent("/api/search"),
+                resolvingAgainstBaseURL: false
+            )!
+            components.queryItems = [URLQueryItem(name: "q", value: candidate)]
+            guard let requestURL = components.url else { continue }
+            let (data, response) = try await session.data(from: requestURL)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                continue
+            }
+            let results = try JSONDecoder().decode([LRCLIBSearchResult].self, from: data)
+            for result in results where !seen.contains(result.id) {
+                seen.insert(result.id)
+                merged.append(result)
+            }
+            if merged.count >= 15 {
+                break
+            }
         }
 
-        return try JSONDecoder().decode([LRCLIBSearchResult].self, from: data)
+        return merged
     }
 
     private func fetchDirect(track: TrackSnapshot) async throws -> LyricsResult? {
@@ -204,5 +215,41 @@ public struct LRCLIBLyricsProvider: LyricsProvider {
             return LyricsResult(source: .lrclib, syncedLines: [], plainText: plain, confidence: 0.8)
         }
         return nil
+    }
+
+    private func makeQueryCandidates(track: TrackSnapshot) -> [String] {
+        let title = compact(track.title)
+        let artist = compact(track.artist)
+        let strippedTitle = stripDecorations(title)
+
+        var candidates: [String] = []
+        candidates.append("\(title) \(artist)")
+        candidates.append("\(strippedTitle) \(artist)")
+        candidates.append(title)
+        candidates.append(strippedTitle)
+        candidates.append("\(artist) \(title)")
+
+        var seen = Set<String>()
+        return candidates
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .filter { seen.insert($0).inserted }
+    }
+
+    private func compact(_ text: String) -> String {
+        text.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func stripDecorations(_ title: String) -> String {
+        var result = title
+        result = result.replacingOccurrences(of: #"\(.*?\)"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"（.*?）"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\[.*?\]"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"【.*?】"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"(?i)\bfeat\.?.*$"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"(?i)\bft\.?.*$"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"(?i)\bver\.?.*$"#, with: "", options: .regularExpression)
+        return compact(result)
     }
 }
