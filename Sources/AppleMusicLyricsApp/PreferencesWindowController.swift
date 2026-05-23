@@ -3,21 +3,46 @@ import SwiftUI
 import AppleMusicLyricsCore
 
 @MainActor
+protocol PreferencesWindowDelegate: AnyObject {
+    func preferencesWindowDidSave(_ preferences: LyricsPreferences)
+    func preferencesWindowDidRequestResetPosition()
+    func preferencesWindowDidRequestClearCache()
+}
+
+@MainActor
+final class PreferencesViewModel: ObservableObject {
+    @Published var preferences: LyricsPreferences {
+        didSet {
+            delegate?.preferencesWindowDidSave(preferences)
+        }
+    }
+
+    weak var delegate: PreferencesWindowDelegate?
+
+    init(preferences: LyricsPreferences, delegate: PreferencesWindowDelegate?) {
+        self.preferences = preferences
+        self.delegate = delegate
+    }
+
+    func resetPosition() {
+        delegate?.preferencesWindowDidRequestResetPosition()
+    }
+
+    func clearCache() {
+        delegate?.preferencesWindowDidRequestClearCache()
+    }
+}
+
+@MainActor
 final class PreferencesWindowController {
     private var window: NSWindow?
+    private var viewModel: PreferencesViewModel?
+    weak var delegate: PreferencesWindowDelegate?
 
-    func show(
-        preferences: LyricsPreferences,
-        onSave: @escaping (LyricsPreferences) -> Void,
-        onResetPosition: @escaping () -> Void,
-        onClearCache: @escaping () -> Void
-    ) {
-        let view = PreferencesView(
-            preferences: preferences,
-            onSave: onSave,
-            onResetPosition: onResetPosition,
-            onClearCache: onClearCache
-        )
+    func show(preferences: LyricsPreferences) {
+        let model = PreferencesViewModel(preferences: preferences, delegate: delegate)
+        viewModel = model
+        let view = PreferencesView(viewModel: model)
 
         if window == nil {
             window = NSWindow(

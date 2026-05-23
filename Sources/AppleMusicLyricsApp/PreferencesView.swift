@@ -2,10 +2,7 @@ import SwiftUI
 import AppleMusicLyricsCore
 
 struct PreferencesView: View {
-    @State var preferences: LyricsPreferences
-    let onSave: (LyricsPreferences) -> Void
-    let onResetPosition: () -> Void
-    let onClearCache: () -> Void
+    @ObservedObject var viewModel: PreferencesViewModel
 
     var body: some View {
         Form {
@@ -34,10 +31,10 @@ struct PreferencesView: View {
 
             HStack {
                 Button("重置位置") {
-                    onResetPosition()
+                    viewModel.resetPosition()
                 }
                 Button("清理缓存") {
-                    onClearCache()
+                    viewModel.clearCache()
                 }
             }
         }
@@ -47,10 +44,9 @@ struct PreferencesView: View {
 
     private func binding<Value>(_ keyPath: WritableKeyPath<LyricsPreferences, Value>) -> Binding<Value> {
         Binding(
-            get: { preferences[keyPath: keyPath] },
+            get: { viewModel.preferences[keyPath: keyPath] },
             set: { newValue in
-                preferences[keyPath: keyPath] = newValue
-                onSave(preferences)
+                viewModel.preferences[keyPath: keyPath] = newValue
             }
         )
     }

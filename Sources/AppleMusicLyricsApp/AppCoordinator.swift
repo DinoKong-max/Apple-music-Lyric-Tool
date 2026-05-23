@@ -23,6 +23,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         preferences = (try? preferencesStore.load()) ?? .default
         overlayVisible = preferences.isOverlayVisible
         overlayController = LyricsOverlayController(preferences: preferences)
+        preferencesWindowController.delegate = self
         if let cacheDirectory = try? LyricsCache.defaultDirectory() {
             cache = LyricsCache(directory: cacheDirectory)
         }
@@ -242,29 +243,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
     }
 
     private func openPreferences() {
-        preferencesWindowController.show(
-            preferences: preferences,
-            onSave: { [weak self] updated in
-                guard let self else { return }
-                self.preferences = updated
-                try? self.preferencesStore.save(updated)
-                self.overlayVisible = updated.isOverlayVisible
-                self.overlayController?.updatePreferences(updated)
-                if !updated.isOverlayVisible {
-                    self.overlayController?.hide()
-                }
-            },
-            onResetPosition: { [weak self] in
-                guard let self else { return }
-                self.preferences.windowOrigin = nil
-                try? self.preferencesStore.save(self.preferences)
-                self.overlayController?.updatePreferences(self.preferences)
-            },
-            onClearCache: { [weak self] in
-                try? self?.cache?.clear()
-                self?.statusMenuController?.setStatus("歌词缓存已清理")
-            }
-        )
+        preferencesWindowController.show(preferences: preferences)
     }
 
     private func showAbout() {
@@ -292,5 +271,28 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         if changed {
             try? preferencesStore.save(preferences)
         }
+    }
+}
+
+extension AppCoordinator: PreferencesWindowDelegate {
+    func preferencesWindowDidSave(_ updated: LyricsPreferences) {
+        preferences = updated
+        try? preferencesStore.save(updated)
+        overlayVisible = updated.isOverlayVisible
+        overlayController?.updatePreferences(updated)
+        if !updated.isOverlayVisible {
+            overlayController?.hide()
+        }
+    }
+
+    func preferencesWindowDidRequestResetPosition() {
+        preferences.windowOrigin = nil
+        try? preferencesStore.save(preferences)
+        overlayController?.updatePreferences(preferences)
+    }
+
+    func preferencesWindowDidRequestClearCache() {
+        try? cache?.clear()
+        statusMenuController?.setStatus("歌词缓存已清理")
     }
 }
