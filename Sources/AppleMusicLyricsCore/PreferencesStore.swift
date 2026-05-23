@@ -33,6 +33,7 @@ public struct LyricsPreferences: Codable, Equatable, Sendable {
     public var gradientStartColor: CodableColor
     public var gradientEndColor: CodableColor
     public var isGradientEnabled: Bool
+    public var isGlassTextEnabled: Bool
     public var opacity: Double
     public var overlayWidth: Double
     public var windowOrigin: CodablePoint?
@@ -46,6 +47,7 @@ public struct LyricsPreferences: Codable, Equatable, Sendable {
         gradientStartColor: CodableColor(red: 1.0, green: 0.47, blue: 0.10),
         gradientEndColor: CodableColor(red: 0.35, green: 0.48, blue: 1.0),
         isGradientEnabled: true,
+        isGlassTextEnabled: false,
         opacity: 1,
         overlayWidth: 920,
         windowOrigin: nil

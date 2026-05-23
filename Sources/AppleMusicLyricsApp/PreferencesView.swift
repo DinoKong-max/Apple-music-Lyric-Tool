@@ -30,6 +30,7 @@ struct PreferencesView: View {
             }
 
             Toggle("启用渐变", isOn: binding(\.isGradientEnabled))
+            Toggle("液态玻璃字体", isOn: binding(\.isGlassTextEnabled))
 
             HStack {
                 Button("重置位置") {

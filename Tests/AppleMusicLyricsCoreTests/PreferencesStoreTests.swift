@@ -10,6 +10,7 @@ import Testing
     #expect(preferences.fontName == "SF Pro Display")
     #expect(preferences.fontSize == 32)
     #expect(preferences.isGradientEnabled)
+    #expect(!preferences.isGlassTextEnabled)
     #expect(preferences.overlayWidth == 920)
 }
 
@@ -20,6 +21,7 @@ import Testing
     var preferences = LyricsPreferences.default
     preferences.isLocked = true
     preferences.fontSize = 40
+    preferences.isGlassTextEnabled = true
     preferences.overlayWidth = 1200
 
     try store.save(preferences)

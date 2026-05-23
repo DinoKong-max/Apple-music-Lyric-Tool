@@ -9,33 +9,36 @@ struct LyricsOverlayView: View {
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
-                lyricText(model.currentLine, size: model.preferences.fontSize, opacity: model.preferences.opacity)
-                    .fontWeight(.bold)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.62)
-                    .id("current-\(model.currentLine)")
-                    .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .bottom).combined(with: .opacity),
-                            removal: .move(edge: .top).combined(with: .opacity)
-                        )
+                lyricLineText(
+                    model.currentLine,
+                    size: model.preferences.fontSize,
+                    opacity: model.preferences.opacity,
+                    isPrimary: true
+                )
+                .id("current-\(model.currentLine)")
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .move(edge: .top).combined(with: .opacity)
                     )
+                )
             }
             .animation(.easeInOut(duration: 0.33), value: model.currentLine)
 
             ZStack {
-                Text(model.nextLine)
-                    .font(.custom(model.preferences.fontName, size: max(model.preferences.fontSize * 0.52, 14)))
-                    .foregroundStyle(.white.opacity(0.72))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.62)
-                    .id("next-\(model.nextLine)")
-                    .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .bottom).combined(with: .opacity),
-                            removal: .move(edge: .top).combined(with: .opacity)
-                        )
+                lyricLineText(
+                    model.nextLine,
+                    size: max(model.preferences.fontSize * 0.52, 14),
+                    opacity: model.preferences.opacity * 0.72,
+                    isPrimary: false
+                )
+                .id("next-\(model.nextLine)")
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .move(edge: .top).combined(with: .opacity)
                     )
+                )
             }
             .animation(.easeInOut(duration: 0.33), value: model.nextLine)
         }
@@ -52,8 +55,33 @@ struct LyricsOverlayView: View {
     }
 
     @ViewBuilder
-    private func lyricText(_ text: String, size: Double, opacity: Double) -> some View {
+    private func lyricLineText(_ text: String, size: Double, opacity: Double, isPrimary: Bool) -> some View {
         let font = Font.custom(model.preferences.fontName, size: size)
+        if model.preferences.isGlassTextEnabled {
+            ZStack {
+                Text(text)
+                    .font(font)
+                    .foregroundStyle(.white.opacity(isPrimary ? 0.9 : 0.75))
+                    .blur(radius: isPrimary ? 1.4 : 1.0)
+                baseLyricText(text, font: font, opacity: opacity)
+                    .overlay(
+                        Text(text)
+                            .font(font)
+                            .foregroundStyle(.white.opacity(isPrimary ? 0.35 : 0.22))
+                            .blendMode(.screen)
+                    )
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
+        } else {
+            baseLyricText(text, font: font, opacity: opacity)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+        }
+    }
+
+    @ViewBuilder
+    private func baseLyricText(_ text: String, font: Font, opacity: Double) -> some View {
         if model.preferences.isGradientEnabled {
             Text(text)
                 .font(font)
