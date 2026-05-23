@@ -58,21 +58,14 @@ struct LyricsOverlayView: View {
     private func lyricLineText(_ text: String, size: Double, opacity: Double, isPrimary: Bool) -> some View {
         let font = Font.custom(model.preferences.fontName, size: size)
         if model.preferences.isGlassTextEnabled {
-            ZStack {
-                Text(text)
-                    .font(font)
-                    .foregroundStyle(.white.opacity(isPrimary ? 0.9 : 0.75))
-                    .blur(radius: isPrimary ? 1.4 : 1.0)
-                baseLyricText(text, font: font, opacity: opacity)
-                    .overlay(
-                        Text(text)
-                            .font(font)
-                            .foregroundStyle(.white.opacity(isPrimary ? 0.35 : 0.22))
-                            .blendMode(.screen)
-                    )
-            }
-            .lineLimit(1)
-            .minimumScaleFactor(0.62)
+            GlassLyricText(
+                text: text,
+                font: font,
+                opacity: opacity,
+                isPrimary: isPrimary,
+                startColor: Color(model.preferences.gradientStartColor),
+                endColor: Color(model.preferences.gradientEndColor)
+            )
         } else {
             baseLyricText(text, font: font, opacity: opacity)
                 .lineLimit(1)
@@ -126,6 +119,74 @@ struct LyricsOverlayView: View {
                 .padding(.trailing, 8)
                 .padding(.bottom, 7)
         }
+    }
+}
+
+private struct GlassLyricText: View {
+    let text: String
+    let font: Font
+    let opacity: Double
+    let isPrimary: Bool
+    let startColor: Color
+    let endColor: Color
+
+    var body: some View {
+        Text(text)
+            .font(font)
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
+            .foregroundStyle(.clear)
+            .overlay {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(isPrimary ? 0.72 : 0.46),
+                                .white.opacity(0.18),
+                                .black.opacity(0.16)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .blendMode(.screen)
+                    )
+                    .overlay(
+                        LinearGradient(
+                            colors: [
+                                startColor.opacity(isPrimary ? 0.45 : 0.28),
+                                .clear,
+                                endColor.opacity(isPrimary ? 0.5 : 0.32)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .blendMode(.plusLighter)
+                    )
+                    .mask(textMask)
+                    .opacity(opacity)
+            }
+            .overlay {
+                textMask
+                    .foregroundStyle(.white.opacity(isPrimary ? 0.32 : 0.2))
+                    .offset(x: -0.8, y: -0.8)
+                    .blendMode(.screen)
+            }
+            .overlay {
+                textMask
+                    .foregroundStyle(.black.opacity(isPrimary ? 0.22 : 0.16))
+                    .offset(x: 1.0, y: 1.0)
+                    .blendMode(.multiply)
+            }
+            .shadow(color: .white.opacity(isPrimary ? 0.32 : 0.16), radius: isPrimary ? 5 : 3, x: 0, y: 0)
+            .shadow(color: .black.opacity(0.45), radius: isPrimary ? 9 : 6, x: 0, y: 2)
+    }
+
+    private var textMask: some View {
+        Text(text)
+            .font(font)
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
     }
 }
 
