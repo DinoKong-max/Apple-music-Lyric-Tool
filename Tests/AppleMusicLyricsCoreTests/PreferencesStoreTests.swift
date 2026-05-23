@@ -11,7 +11,7 @@ import Testing
     #expect(preferences.fontSize == 32)
     #expect(preferences.isGradientEnabled)
     #expect(!preferences.isGlassTextEnabled)
-    #expect(preferences.overlayWidth == 920)
+    #expect(preferences.overlayWidth == 1180)
 }
 
 @Test func storesPreferencesInUserDefaults() throws {

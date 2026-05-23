@@ -15,6 +15,7 @@ struct LyricsOverlayView: View {
                     opacity: model.preferences.opacity,
                     isPrimary: true
                 )
+                .frame(maxWidth: .infinity)
                 .id("current-\(model.currentLine)")
                 .transition(
                     .asymmetric(
@@ -28,10 +29,11 @@ struct LyricsOverlayView: View {
             ZStack {
                 lyricLineText(
                     model.nextLine,
-                    size: max(model.preferences.fontSize * 0.52, 14),
+                    size: max(model.preferences.fontSize * 0.58, 14),
                     opacity: model.preferences.opacity * 0.72,
                     isPrimary: false
                 )
+                .frame(maxWidth: .infinity)
                 .id("next-\(model.nextLine)")
                 .transition(
                     .asymmetric(
@@ -69,7 +71,8 @@ struct LyricsOverlayView: View {
         } else {
             baseLyricText(text, font: font, opacity: opacity)
                 .lineLimit(1)
-                .minimumScaleFactor(0.62)
+                .allowsTightening(true)
+                .minimumScaleFactor(0.88)
         }
     }
 
@@ -134,7 +137,8 @@ private struct GlassLyricText: View {
         Text(text)
             .font(font)
             .lineLimit(1)
-            .minimumScaleFactor(0.62)
+            .allowsTightening(true)
+            .minimumScaleFactor(0.88)
             .foregroundStyle(.clear)
             .overlay {
                 Rectangle()
@@ -186,7 +190,8 @@ private struct GlassLyricText: View {
         Text(text)
             .font(font)
             .lineLimit(1)
-            .minimumScaleFactor(0.62)
+            .allowsTightening(true)
+            .minimumScaleFactor(0.88)
     }
 }
 

@@ -49,7 +49,7 @@ public struct LyricsPreferences: Codable, Equatable, Sendable {
         isGradientEnabled: true,
         isGlassTextEnabled: false,
         opacity: 1,
-        overlayWidth: 920,
+        overlayWidth: 1180,
         windowOrigin: nil
     )
 }
