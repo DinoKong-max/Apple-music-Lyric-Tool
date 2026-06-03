@@ -59,7 +59,11 @@ final class StatusMenuController: NSObject {
     @objc private func toggleOverlay() { actions.toggleOverlay() }
     @objc private func toggleLock() { actions.toggleLock() }
     @objc private func refreshLyrics() { actions.refreshLyrics() }
-    @objc private func openPreferences() { actions.openPreferences() }
+    @objc private func openPreferences() {
+        DispatchQueue.main.async { [actions] in
+            actions.openPreferences()
+        }
+    }
     @objc private func showAbout() { actions.showAbout() }
     @objc private func quit() { actions.quit() }
 }

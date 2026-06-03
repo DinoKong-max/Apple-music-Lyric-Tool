@@ -51,6 +51,7 @@ final class PreferencesWindowController {
                 backing: .buffered,
                 defer: false
             )
+            window?.isReleasedWhenClosed = false
             window?.title = "Apple Music Lyrics 偏好设置"
             window?.center()
         }
