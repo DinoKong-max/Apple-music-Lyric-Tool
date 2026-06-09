@@ -23,6 +23,9 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         preferences = (try? preferencesStore.load()) ?? .default
         overlayVisible = preferences.isOverlayVisible
         overlayController = LyricsOverlayController(preferences: preferences)
+        overlayController?.onFrameChanged = { [weak self] in
+            self?.saveOverlayOriginIfNeeded()
+        }
         preferencesWindowController.delegate = self
         if let cacheDirectory = try? LyricsCache.defaultDirectory() {
             cache = LyricsCache(directory: cacheDirectory)
@@ -223,6 +226,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
     }
 
     private func toggleLock() {
+        saveOverlayOriginIfNeeded(force: true)
         preferences.isLocked.toggle()
         try? preferencesStore.save(preferences)
         overlayController?.setLocked(preferences.isLocked)
@@ -253,8 +257,8 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         alert.runModal()
     }
 
-    private func saveOverlayOriginIfNeeded() {
-        guard !preferences.isLocked,
+    private func saveOverlayOriginIfNeeded(force: Bool = false) {
+        guard (force || !preferences.isLocked),
               let origin = overlayController?.currentWindowOrigin() else {
             return
         }
@@ -276,11 +280,18 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
 
 extension AppCoordinator: PreferencesWindowDelegate {
     func preferencesWindowDidSave(_ updated: LyricsPreferences) {
-        preferences = updated
-        try? preferencesStore.save(updated)
-        overlayVisible = updated.isOverlayVisible
-        overlayController?.updatePreferences(updated)
-        if !updated.isOverlayVisible {
+        var merged = updated
+        if let origin = overlayController?.currentWindowOrigin() {
+            merged.windowOrigin = origin
+        }
+        if let width = overlayController?.currentWindowWidth() {
+            merged.overlayWidth = width
+        }
+        preferences = merged
+        try? preferencesStore.save(merged)
+        overlayVisible = merged.isOverlayVisible
+        overlayController?.updatePreferences(merged)
+        if !merged.isOverlayVisible {
             overlayController?.hide()
         }
     }

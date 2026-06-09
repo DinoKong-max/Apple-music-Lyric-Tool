@@ -102,12 +102,17 @@ struct LyricsOverlayView: View {
     @ViewBuilder
     private var selectionOutline: some View {
         if !model.preferences.isLocked {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(isHovered ? 0.08 : 0.03))
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color.clear)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(isHovered ? 0.65 : 0.28), lineWidth: isHovered ? 1.4 : 1)
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(Color.gray.opacity(isHovered ? 0.54 : 0.34), lineWidth: isHovered ? 1.4 : 1)
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(Color.white.opacity(isHovered ? 0.28 : 0.16), lineWidth: 0.6)
+                )
+                .shadow(color: .black.opacity(isHovered ? 0.18 : 0.10), radius: isHovered ? 10 : 6, x: 0, y: 3)
         } else {
             Color.clear
         }

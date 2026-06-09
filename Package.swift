@@ -22,6 +22,10 @@ let package = Package(
         .testTarget(
             name: "AppleMusicLyricsCoreTests",
             dependencies: ["AppleMusicLyricsCore"]
+        ),
+        .testTarget(
+            name: "AppleMusicLyricsAppTests",
+            dependencies: ["AppleMusicLyricsApp", "AppleMusicLyricsCore"]
         )
     ]
 )
